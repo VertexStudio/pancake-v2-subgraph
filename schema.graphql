@@ -44,7 +44,7 @@ type Token @entity {
   totalLiquidity: BigDecimal!
 
   # derived prices
-  derivedETH: BigDecimal
+  derivedBNB: BigDecimal!
 
   # derived fields
   tokenDayData: [TokenDayData!]! @derivedFrom(field: "token")
@@ -57,6 +57,7 @@ type Token @entity {
 type Pair @entity {
   # pair address
   id: ID!
+  platform: String!
 
   # mirrored from the smart contract
   token0: Token!
@@ -83,6 +84,9 @@ type Pair @entity {
   # creation stats
   createdAtTimestamp: BigInt!
   createdAtBlockNumber: BigInt!
+
+  # Fields used to help derived relationship
+  liquidityProviderCount: BigInt! # used to detect new exchanges
 
   # derived fields
   pairHourData: [PairHourData!]! @derivedFrom(field: "pair")
@@ -167,6 +171,10 @@ type Swap @entity {
   amount1In: BigDecimal!
   amount0Out: BigDecimal!
   amount1Out: BigDecimal!
+  amountToken: BigDecimal!
+  priceUSD: BigDecimal!
+  priceBNB: BigDecimal
+  totalBNB: BigDecimal
   to: Bytes!
   logIndex: BigInt
 
@@ -177,7 +185,7 @@ type Swap @entity {
 # stores for USD calculations
 type Bundle @entity {
   id: ID!
-  ethPrice: BigDecimal! # price of ETH usd
+  bnbPrice: BigDecimal! # price of BNB in usd
 }
 
 # Data accumulated and condensed into day stats for all of Uniswap
@@ -259,4 +267,347 @@ type TokenDayData @entity {
 
   # price stats
   priceUSD: BigDecimal!
+}
+
+type User @entity {
+  id: ID!
+  liquidityPositions: [LiquidityPosition!] @derivedFrom(field: "user")
+  usdSwapped: BigDecimal!
+}
+
+type LiquidityPosition @entity {
+  id: ID!
+  user: User!
+  pair: Pair!
+  liquidityTokenBalance: BigDecimal!
+}
+
+# saved over time for return calculations, gets created and never updated
+type LiquidityPositionSnapshot @entity {
+  id: ID!
+  liquidityPosition: LiquidityPosition!
+  timestamp: Int! # saved for fast historical lookups
+  block: Int! # saved for fast historical lookups
+  user: User! # reference to user
+  pair: Pair! # reference to pair
+  token0PriceUSD: BigDecimal! # snapshot of token0 price
+  token1PriceUSD: BigDecimal! # snapshot of token1 price
+  reserve0: BigDecimal! # snapshot of pair token0 reserves
+  reserve1: BigDecimal! # snapshot of pair token1 reserves
+  reserveUSD: BigDecimal! # snapshot of pair reserves in USD
+  liquidityTokenTotalSupply: BigDecimal! # snapshot of pool token supply
+  liquidityTokenBalance: BigDecimal! # snapshot of users pool token balance
+}
+type Pair1minData @entity {
+  id: ID!
+  pair: Pair!
+  startTimestamp: Int!
+  maxTimestamp: Int!
+  openToken1Price: BigDecimal!
+  openToken0Price: BigDecimal!
+  closeToken1Price: BigDecimal!
+  closeToken0Price: BigDecimal!
+  highToken1Price: BigDecimal!
+  highToken0Price: BigDecimal!
+  lowToken1Price: BigDecimal!
+  lowToken0Price: BigDecimal!
+  openToken1USD: BigDecimal!
+  openToken0USD: BigDecimal!
+  highToken1USD: BigDecimal!
+  highToken0USD: BigDecimal!
+  closeToken1USD: BigDecimal!
+  closeToken0USD: BigDecimal!
+  lowToken1USD: BigDecimal!
+  lowToken0USD: BigDecimal!
+  openToken0BNB: BigDecimal!
+  openToken1BNB: BigDecimal!
+  closeToken0BNB: BigDecimal!
+  closeToken1BNB: BigDecimal!
+  highToken0BNB: BigDecimal!
+  highToken1BNB: BigDecimal!
+  lowToken0BNB: BigDecimal!
+  lowToken1BNB: BigDecimal!
+}
+
+type Pair5minData @entity {
+  id: ID!
+  pair: Pair!
+  startTimestamp: Int!
+  maxTimestamp: Int!
+  openToken1Price: BigDecimal!
+  openToken0Price: BigDecimal!
+  closeToken1Price: BigDecimal!
+  closeToken0Price: BigDecimal!
+  highToken1Price: BigDecimal!
+  highToken0Price: BigDecimal!
+  lowToken1Price: BigDecimal!
+  lowToken0Price: BigDecimal!
+  openToken1USD: BigDecimal!
+  openToken0USD: BigDecimal!
+  highToken1USD: BigDecimal!
+  highToken0USD: BigDecimal!
+  closeToken1USD: BigDecimal!
+  closeToken0USD: BigDecimal!
+  lowToken1USD: BigDecimal!
+  lowToken0USD: BigDecimal!
+  openToken0BNB: BigDecimal!
+  openToken1BNB: BigDecimal!
+  closeToken0BNB: BigDecimal!
+  closeToken1BNB: BigDecimal!
+  highToken0BNB: BigDecimal!
+  highToken1BNB: BigDecimal!
+  lowToken0BNB: BigDecimal!
+  lowToken1BNB: BigDecimal!
+}
+type Pair15minData @entity {
+  id: ID!
+  pair: Pair!
+  startTimestamp: Int!
+  maxTimestamp: Int!
+  openToken1Price: BigDecimal!
+  openToken0Price: BigDecimal!
+  closeToken1Price: BigDecimal!
+  closeToken0Price: BigDecimal!
+  highToken1Price: BigDecimal!
+  highToken0Price: BigDecimal!
+  lowToken1Price: BigDecimal!
+  lowToken0Price: BigDecimal!
+  openToken1USD: BigDecimal!
+  openToken0USD: BigDecimal!
+  highToken1USD: BigDecimal!
+  highToken0USD: BigDecimal!
+  closeToken1USD: BigDecimal!
+  closeToken0USD: BigDecimal!
+  lowToken1USD: BigDecimal!
+  lowToken0USD: BigDecimal!
+  openToken0BNB: BigDecimal!
+  openToken1BNB: BigDecimal!
+  closeToken0BNB: BigDecimal!
+  closeToken1BNB: BigDecimal!
+  highToken0BNB: BigDecimal!
+  highToken1BNB: BigDecimal!
+  lowToken0BNB: BigDecimal!
+  lowToken1BNB: BigDecimal!
+}
+
+type Pair30minData @entity {
+  id: ID!
+  pair: Pair!
+  startTimestamp: Int!
+  maxTimestamp: Int!
+  openToken1Price: BigDecimal!
+  openToken0Price: BigDecimal!
+  closeToken1Price: BigDecimal!
+  closeToken0Price: BigDecimal!
+  highToken1Price: BigDecimal!
+  highToken0Price: BigDecimal!
+  lowToken1Price: BigDecimal!
+  lowToken0Price: BigDecimal!
+  openToken1USD: BigDecimal!
+  openToken0USD: BigDecimal!
+  highToken1USD: BigDecimal!
+  highToken0USD: BigDecimal!
+  closeToken1USD: BigDecimal!
+  closeToken0USD: BigDecimal!
+  lowToken1USD: BigDecimal!
+  lowToken0USD: BigDecimal!
+  openToken0BNB: BigDecimal!
+  openToken1BNB: BigDecimal!
+  closeToken0BNB: BigDecimal!
+  closeToken1BNB: BigDecimal!
+  highToken0BNB: BigDecimal!
+  highToken1BNB: BigDecimal!
+  lowToken0BNB: BigDecimal!
+  lowToken1BNB: BigDecimal!
+}
+
+
+type Pair1hData @entity {
+  id: ID!
+  pair: Pair!
+  startTimestamp: Int!
+  maxTimestamp: Int!
+  openToken1Price: BigDecimal!
+  openToken0Price: BigDecimal!
+  closeToken1Price: BigDecimal!
+  closeToken0Price: BigDecimal!
+  highToken1Price: BigDecimal!
+  highToken0Price: BigDecimal!
+  lowToken1Price: BigDecimal!
+  lowToken0Price: BigDecimal!
+  openToken1USD: BigDecimal!
+  openToken0USD: BigDecimal!
+  highToken1USD: BigDecimal!
+  highToken0USD: BigDecimal!
+  closeToken1USD: BigDecimal!
+  closeToken0USD: BigDecimal!
+  lowToken1USD: BigDecimal!
+  lowToken0USD: BigDecimal!
+  openToken0BNB: BigDecimal!
+  openToken1BNB: BigDecimal!
+  closeToken0BNB: BigDecimal!
+  closeToken1BNB: BigDecimal!
+  highToken0BNB: BigDecimal!
+  highToken1BNB: BigDecimal!
+  lowToken0BNB: BigDecimal!
+  lowToken1BNB: BigDecimal!
+}
+
+
+type Pair3hData @entity {
+  id: ID!
+  pair: Pair!
+  startTimestamp: Int!
+  maxTimestamp: Int!
+  openToken1Price: BigDecimal!
+  openToken0Price: BigDecimal!
+  closeToken1Price: BigDecimal!
+  closeToken0Price: BigDecimal!
+  highToken1Price: BigDecimal!
+  highToken0Price: BigDecimal!
+  lowToken1Price: BigDecimal!
+  lowToken0Price: BigDecimal!
+  openToken1USD: BigDecimal!
+  openToken0USD: BigDecimal!
+  highToken1USD: BigDecimal!
+  highToken0USD: BigDecimal!
+  closeToken1USD: BigDecimal!
+  closeToken0USD: BigDecimal!
+  lowToken1USD: BigDecimal!
+  lowToken0USD: BigDecimal!
+  openToken0BNB: BigDecimal!
+  openToken1BNB: BigDecimal!
+  closeToken0BNB: BigDecimal!
+  closeToken1BNB: BigDecimal!
+  highToken0BNB: BigDecimal!
+  highToken1BNB: BigDecimal!
+  lowToken0BNB: BigDecimal!
+  lowToken1BNB: BigDecimal!
+}
+
+
+type Pair6hData @entity {
+  id: ID!
+  pair: Pair!
+  startTimestamp: Int!
+  maxTimestamp: Int!
+  openToken1Price: BigDecimal!
+  openToken0Price: BigDecimal!
+  closeToken1Price: BigDecimal!
+  closeToken0Price: BigDecimal!
+  highToken1Price: BigDecimal!
+  highToken0Price: BigDecimal!
+  lowToken1Price: BigDecimal!
+  lowToken0Price: BigDecimal!
+  openToken1USD: BigDecimal!
+  openToken0USD: BigDecimal!
+  highToken1USD: BigDecimal!
+  highToken0USD: BigDecimal!
+  closeToken1USD: BigDecimal!
+  closeToken0USD: BigDecimal!
+  lowToken1USD: BigDecimal!
+  lowToken0USD: BigDecimal!
+  openToken0BNB: BigDecimal!
+  openToken1BNB: BigDecimal!
+  closeToken0BNB: BigDecimal!
+  closeToken1BNB: BigDecimal!
+  highToken0BNB: BigDecimal!
+  highToken1BNB: BigDecimal!
+  lowToken0BNB: BigDecimal!
+  lowToken1BNB: BigDecimal!
+}
+
+
+type Pair12hData @entity {
+  id: ID!
+  pair: Pair!
+  startTimestamp: Int!
+  maxTimestamp: Int!
+  openToken1Price: BigDecimal!
+  openToken0Price: BigDecimal!
+  closeToken1Price: BigDecimal!
+  closeToken0Price: BigDecimal!
+  highToken1Price: BigDecimal!
+  highToken0Price: BigDecimal!
+  lowToken1Price: BigDecimal!
+  lowToken0Price: BigDecimal!
+  openToken1USD: BigDecimal!
+  openToken0USD: BigDecimal!
+  highToken1USD: BigDecimal!
+  highToken0USD: BigDecimal!
+  closeToken1USD: BigDecimal!
+  closeToken0USD: BigDecimal!
+  lowToken1USD: BigDecimal!
+  lowToken0USD: BigDecimal!
+  openToken0BNB: BigDecimal!
+  openToken1BNB: BigDecimal!
+  closeToken0BNB: BigDecimal!
+  closeToken1BNB: BigDecimal!
+  highToken0BNB: BigDecimal!
+  highToken1BNB: BigDecimal!
+  lowToken0BNB: BigDecimal!
+  lowToken1BNB: BigDecimal!
+}
+
+
+type Pair1dData @entity {
+  id: ID!
+  pair: Pair!
+  startTimestamp: Int!
+  maxTimestamp: Int!
+  openToken1Price: BigDecimal!
+  openToken0Price: BigDecimal!
+  closeToken1Price: BigDecimal!
+  closeToken0Price: BigDecimal!
+  highToken1Price: BigDecimal!
+  highToken0Price: BigDecimal!
+  lowToken1Price: BigDecimal!
+  lowToken0Price: BigDecimal!
+  openToken1USD: BigDecimal!
+  openToken0USD: BigDecimal!
+  highToken1USD: BigDecimal!
+  highToken0USD: BigDecimal!
+  closeToken1USD: BigDecimal!
+  closeToken0USD: BigDecimal!
+  lowToken1USD: BigDecimal!
+  lowToken0USD: BigDecimal!
+  openToken0BNB: BigDecimal!
+  openToken1BNB: BigDecimal!
+  closeToken0BNB: BigDecimal!
+  closeToken1BNB: BigDecimal!
+  highToken0BNB: BigDecimal!
+  highToken1BNB: BigDecimal!
+  lowToken0BNB: BigDecimal!
+  lowToken1BNB: BigDecimal!
+}
+
+type Pair3dData @entity {
+  id: ID!
+  pair: Pair!
+  startTimestamp: Int!
+  maxTimestamp: Int!
+  openToken1Price: BigDecimal!
+  openToken0Price: BigDecimal!
+  closeToken1Price: BigDecimal!
+  closeToken0Price: BigDecimal!
+  highToken1Price: BigDecimal!
+  highToken0Price: BigDecimal!
+  lowToken1Price: BigDecimal!
+  lowToken0Price: BigDecimal!
+  openToken1USD: BigDecimal!
+  openToken0USD: BigDecimal!
+  highToken1USD: BigDecimal!
+  highToken0USD: BigDecimal!
+  closeToken1USD: BigDecimal!
+  closeToken0USD: BigDecimal!
+  lowToken1USD: BigDecimal!
+  lowToken0USD: BigDecimal!
+  openToken0BNB: BigDecimal!
+  openToken1BNB: BigDecimal!
+  closeToken0BNB: BigDecimal!
+  closeToken1BNB: BigDecimal!
+  highToken0BNB: BigDecimal!
+  highToken1BNB: BigDecimal!
+  lowToken0BNB: BigDecimal!
+  lowToken1BNB: BigDecimal!
 }
