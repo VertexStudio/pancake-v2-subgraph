@@ -13,6 +13,7 @@ import {
 import { Pair as PairContract, Mint, Burn, Swap, Transfer, Sync } from '../types/templates/Pair/Pair'
 import { updatePairDayData, updateTokenDayData, updateUniswapDayData, updatePairHourData } from './dayUpdates'
 import { updateIntervalsData } from './intervalsUpdates'
+import { updateIntervalsVolumes } from './intervalsVolumes';
 
 import { getBnbPriceInUSD, findBnbPerToken, getTrackedVolumeUSD, getTrackedLiquidityUSD } from './pricing'
 import {
@@ -326,7 +327,7 @@ export function handleMint(event: Mint): void {
   updateUniswapDayData(event)
   updateTokenDayData(token0 as Token, event)
   updateTokenDayData(token1 as Token, event)
-  updateIntervalsData(event)
+  updateIntervalsData(event, false)
 }
 
 export function handleBurn(event: Burn): void {
@@ -385,7 +386,7 @@ export function handleBurn(event: Burn): void {
   updateUniswapDayData(event)
   updateTokenDayData(token0 as Token, event)
   updateTokenDayData(token1 as Token, event)
-  updateIntervalsData(event)
+  updateIntervalsData(event, false)
 }
 
 export function handleSwap(event: Swap): void {
@@ -483,9 +484,9 @@ export function handleSwap(event: Swap): void {
   swap.amount1In = amount1In
   swap.amount0Out = amount0Out
   swap.amount1Out = amount1Out
-  swap.amountToken = amount1In.minus(amount1Out).gt(ZERO_BD) ? amount1In.minus(amount1Out) : amount1In.minus(amount1Out).neg()
-  swap.priceBNB = token1.derivedBNB
-  swap.priceUSD = token1.derivedBNB.times(bundle.bnbPrice)
+  swap.amountToken = amount0In.minus(amount0Out).gt(ZERO_BD) ? amount0In.minus(amount0Out) : amount1In.minus(amount0Out).neg()
+  swap.priceBNB = token0.derivedBNB
+  swap.priceUSD = token0.derivedBNB.times(bundle.bnbPrice)
   swap.totalBNB = derivedAmountBNB
   swap.to = event.params.to
   swap.from = event.transaction.from
@@ -508,7 +509,7 @@ export function handleSwap(event: Swap): void {
   let uniswapDayData = updateUniswapDayData(event)
   let token0DayData = updateTokenDayData(token0 as Token, event)
   let token1DayData = updateTokenDayData(token1 as Token, event)
-  updateIntervalsData(event)
+  updateIntervalsData(event, true)
 
   // swap specific updating
   uniswapDayData.dailyVolumeUSD = uniswapDayData.dailyVolumeUSD.plus(trackedAmountUSD)
